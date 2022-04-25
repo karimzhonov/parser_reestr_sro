@@ -1,13 +1,10 @@
 > Запуск парсера
 > 
-> ```python parser.py```
+> ```python parser.py {MODE}```
+> 
+> В место MODE надо вставить какой парсер хотите запустить (async-nopriz, async-nostroy, sync-nopriz, sync-nostroy)
 > 
 > И информация будет сохранено в файле ./files/{текущая дата и время}/
-> 
-> > Для запуска конкретного парсера
-> > 
-> > ```python parser.py --mode {name}``` name - 'nostroy' или 'nopriz'
-> >
 > 
 > Можно запускать с дополнительными параметрами
 > 

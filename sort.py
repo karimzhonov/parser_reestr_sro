@@ -4,7 +4,6 @@ from logger import logger
 from utils import get_datetime
 from typer import Typer, Option
 from scripts.sort_data import sort_nopriz, sort_nostroy
-
 app = Typer()
 
 
@@ -22,14 +21,13 @@ def main(path: str = Option('./files/result', help="Path to dir which has 'nostr
         if not os.path.exists(nopriz_path):
             logger.error(f'Cannot find file {nopriz_path}')
             return
+
         nostroy_data = Excel.load(nostroy_path)
-        nopriz_data = Excel.load(nopriz_path)
-        # Sort Nostroy
         nostroy_data = sort_nostroy(nostroy_data)
-        # Main sort
-        data = sort_nopriz(nostroy_data, nopriz_data)
-        # Save
         Excel.save(nostroy_data, os.path.join(path, f'Fayl-1_{get_datetime()}.xlsx'))
+
+        nopriz_data = Excel.load(nopriz_path)
+        data = sort_nopriz(nostroy_data, nopriz_data)
         Excel.save(data, os.path.join(path, f'Fayl-2_{get_datetime()}.xlsx'))
     else:
         logger.error(f'No such dir {path}')

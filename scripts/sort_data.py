@@ -20,30 +20,33 @@ from datetime import datetime
 
 def sort_nostroy(data: list[dict]):
     t0 = datetime.now()
-    for i, card in logger.range(enumerate(data), desc='Sort nostroy'):
-        if not (card['Статус члена'] and card['Сведения о наличии права']
+    return_data = []
+    for card in logger.range(data, desc='Sort nostroy'):
+        if (card['Статус члена'] and card['Сведения о наличии права']
                 and card['Размер взноса в компенсационный фонд возмещения вреда']):
-            del data[i]
-    logger.info(f'Sorted NOSTROY information count - {len(data)}')
+            return_data.append(card)
+    logger.info(f'Sorted NOSTROY information count - {len(return_data)}')
     logger.info(f'Wasted time: {datetime.now() - t0}')
-    return data
+    return return_data
 
 
 def sort_nopriz(nostroy_data: list[dict], nopriz_data: list[dict]):
     logger.info(f'NOSTROY Information count - {len(nostroy_data)}')
     logger.info(f'NOPRIZ Information count - {len(nopriz_data)}')
     # dublikat bazi nostroy
+    append_data = []
     t0 = datetime.now()
-    for ii, nopriz_card in logger.range(enumerate(nopriz_data), desc='Sort nopriz'):
+    deleted_counter, copied_counter = 0, 0
+    for ii, nopriz_card in enumerate(nopriz_data):
         # Praverka nopriz_card yavlyaetsali chlenom
         if nopriz_card['Статус члена'] and nopriz_card['Сведения о наличии права'] \
                 and nopriz_card['Размер взноса в компенсационный фонд возмещения вреда']:
-            # Esli da, ishim ego v base nostroy
+            # Esli da, ishim ego v base nostroy i udalyaem
             for i, nostroy_card in enumerate(nostroy_data):
                 if nostroy_card['ИНН'] == nopriz_card['ИНН']:
-                    # Esli est udalyaem ego s dublikata nostroy
-                    del nostroy_card[i]
-                    logger.debug(f'NOSTROY card deleted: index - {i + 1}')
+                    deleted_counter += 1
+                    nostroy_data.pop(i)
+                    logger.info(f'Card deleted from NOSTROY: index - {i + 1}')
         else:
             # Esli net, ishim ego v base nostroy
             _include = False
@@ -53,8 +56,12 @@ def sort_nopriz(nostroy_data: list[dict], nopriz_data: list[dict]):
                     break
             if not _include:
                 # Esli ego tam net dabavlyaem v dublickat nostroy
-                nostroy_data.append(nopriz_card)
-                logger.debug(f'Copy card from NOPRIZ to NOSTROY: index - {ii + 1}')
-    logger.info(f'Sorted information count - {len(nostroy_data)}')
+                copied_counter += 1
+                append_data.append(nopriz_card)
+                logger.info(f'Copy card from NOPRIZ to NOSTROY: index - {ii + 1}')
+    return_data = [*nostroy_data, *append_data]
+    logger.info(f'Deleted card from NOSTROY count: {deleted_counter}')
+    logger.info(f'Copied card from NOPRIZ: {copied_counter}')
+    logger.info(f'Sorted information count - {len(return_data)}')
     logger.info(f'Wasted time: {datetime.now() - t0}')
-    return nostroy_data
+    return return_data

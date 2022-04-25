@@ -1,42 +1,35 @@
 import os
+import sys
 import asyncio
 from logger import logger
 from utils import get_datetime
-from typer import Typer, Option
-from scripts.async_reestr_nopriz import collect_data as nopriz_collect_data
-from scripts.async_reestr_nostroy_ru import collect_data as nostroy_collect_data
+from typer import Typer, Option, Argument
+from scripts.reestr_nopriz import async_collect_data as nopriz_async_collect_data
+from scripts.reestr_nostroy import async_collect_data as nostroy_async_collect_data
+from scripts.reestr_nopriz import sync_collect_data as nopriz_sync_collect_data
+from scripts.reestr_nostroy import sync_collect_data as nostroy_sync_collect_data
 
 app = Typer()
-
 FOLDER_DIR = os.path.join(os.getcwd(), 'files')
 
-
-async def _gather(mode: str = None, nostroy_async_chunk: int = None, nopriz_async_chunk: int = None,
-                 nostroy_save_chunk: int = None, nopriz_save_chunk: int = None, folder_dir: str = FOLDER_DIR):
-    if mode is None:
-        await asyncio.gather(
-            asyncio.create_task(nopriz_collect_data(os.path.join(folder_dir, f'nopriz.xlsx'), nopriz_save_chunk, nopriz_async_chunk)),
-            asyncio.create_task(nostroy_collect_data(os.path.join(folder_dir, f'nostroy.xlsx'), nostroy_save_chunk, nostroy_async_chunk))
-        )
-    elif mode == 'nopriz':
-        await asyncio.gather(
-            asyncio.create_task(nopriz_collect_data(os.path.join(folder_dir, f'nopriz.xlsx'), nopriz_save_chunk, nopriz_async_chunk)),
-        )
-    elif mode == 'nostroy':
-        await asyncio.gather(
-            asyncio.create_task(nostroy_collect_data(os.path.join(folder_dir, f'nostroy.xlsx'), nostroy_save_chunk, nostroy_async_chunk)),
-        )
+# Set Policy and logging
+if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform.startswith('win'):
+    policy = asyncio.WindowsSelectorEventLoopPolicy()
+    asyncio.set_event_loop_policy(policy)
 
 
 @app.command()
-def main(mode: str = Option(None, help='One of (nopriz, nostroy)'),
+def main(mode: str = Argument(None, help='One of (async-nopriz, async-nostroy, sync-nopriz, sync-nostroy)'),
          log_level: int = Option(0, help='0 - ALL, 1 - warning, debug, error, 2 - warning, error, 3 - error'),
          save_path: str = Option(None, help='Path to save'),
-         nostroy_async_chunk: int = Option(None, help='Count of async tasks'),
-         nopriz_async_chunk: int = Option(None, help='Count of async tasks'),
-         nostroy_save_chunk: int = Option(None, help='Max count of saving card while parsing'),
-         nopriz_save_chunk: int = Option(None, help='Max count of saving card while parsing')):
+         nostroy_async_chunk: int = Option(25, help='Count of async tasks'),
+         nopriz_async_chunk: int = Option(25, help='Count of async tasks'),
+         nostroy_save_chunk: int = Option(10000, help='Max count of saving card while parsing'),
+         nopriz_save_chunk: int = Option(10000, help='Max count of saving card while parsing')):
     """Parser"""
+    if mode is None:
+        os.system(f'python parser.py --help')
+        return
     if save_path is None:
         # Make dir for result
         if not os.path.exists(FOLDER_DIR):
@@ -47,9 +40,17 @@ def main(mode: str = Option(None, help='One of (nopriz, nostroy)'),
         folder_dir = save_path
     # Set log level
     logger.set_level(log_level)
-    # Run Scripts
-    asyncio.run(_gather(mode, nostroy_async_chunk, nopriz_async_chunk,
-                       nostroy_save_chunk, nopriz_save_chunk, folder_dir))
+    # Start
+    if mode == 'async-nopriz':
+        asyncio.run(
+            nopriz_async_collect_data(os.path.join(folder_dir, f'nopriz.xlsx'), nopriz_save_chunk, nopriz_async_chunk))
+    elif mode == 'async-nostroy':
+        asyncio.run(nostroy_async_collect_data(os.path.join(folder_dir, f'nostroy.xlsx'), nostroy_save_chunk,
+                                               nostroy_async_chunk))
+    elif mode == 'sync-nostroy':
+        nostroy_sync_collect_data(os.path.join(folder_dir, f'nostroy.xlsx'), nostroy_save_chunk)
+    elif mode == 'sync-nopriz':
+        nopriz_sync_collect_data(os.path.join(folder_dir, f'nopriz.xlsx'), nopriz_save_chunk)
 
 
 if __name__ == '__main__':

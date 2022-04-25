@@ -40,8 +40,9 @@ class Excel:
     @classmethod
     def load(cls, path):
         data = pd.DataFrame(pd.read_excel(path, sheet_name=cls.sheet_name, engine=cls.engine))
-        labels = data.columns.values
-        return [{key: value for key, value in zip(labels, row)} for row in data.iloc]
+        labels = list(data.columns.values)
+        labels.sort()
+        return [{key: row[key] for key in labels} for row in logger.range(data.iloc, desc=f'Excel loading {path}')]
 
     @classmethod
     def save(cls, data: list[dict], path):
