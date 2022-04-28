@@ -52,7 +52,7 @@ class Excel:
     @classmethod
     def save_dataframe(cls, df: pd.DataFrame, path):
         with pd.ExcelWriter(path) as writer:
-            df.to_excel(writer, sheet_name=cls.sheet_name, index=False)
+            df.to_excel(writer, sheet_name=cls.sheet_name, index=False, columns=list(df.columns.values))
 
     @classmethod
     def save_dicts(cls, data: list[dict], path):
