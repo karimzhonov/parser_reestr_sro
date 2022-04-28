@@ -120,7 +120,6 @@ async def async_collect_data(file_path: str, chunk_save: int = None, chunk: int 
     :param chunk: Count of async requests (if big then 30 may be blocking)
     """
     try:
-        print(chunk_save, chunk)
         if chunk_save is None: chunk_save = 10000
         if chunk is None: chunk = 25
         t0 = datetime.now()
